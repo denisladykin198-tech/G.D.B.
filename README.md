@@ -21,5 +21,5 @@
 
 ```bash
 # просто открыть файл в браузере
-open GAC.html
+open GDB.html
 
