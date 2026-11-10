@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Гриф гитары — 0–24 лад</title>
+<style>
+  *{box-sizing:border-box}
+  body{
+    margin:0;padding:28px 16px 48px;min-height:100vh;
+    background:radial-gradient(1200px 600px at 50% -10%, #1f2836 0%, #0c0f14 65%);
+    color:#e8eef6;
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,Ubuntu,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1{font-size:22px;margin:0 0 6px;text-align:center;letter-spacing:.2px}
+  .sub{margin:0 0 22px;text-align:center;color:#8b97a8;font-size:13px}
+
+  .lang-toggle{
+    position:absolute;top:16px;right:18px;z-index:10;
+    background:#1b2129;color:#c2ccda;border:1px solid #2c3542;border-radius:8px;
+    padding:6px 14px;font-size:13px;font-family:inherit;font-weight:700;
+    letter-spacing:.6px;cursor:pointer;transition:background .15s,border-color .15s,color .15s;
+  }
+  .lang-toggle:hover{background:#253040;border-color:#4dd4ac;color:#4dd4ac}
+
+  .panel{
+    max-width:1080px;margin:0 auto 18px;
+    background:rgba(255,255,255,.03);
+    border:1px solid rgba(255,255,255,.07);
+    border-radius:12px;padding:14px 18px;
+  }
+  .panel-title{
+    font-size:13px;color:#8b97a8;text-transform:uppercase;
+    letter-spacing:.5px;margin-bottom:10px;
+  }
+
+  .controls{
+    display:flex;flex-wrap:wrap;gap:12px 22px;
+    justify-content:center;align-items:center;
+  }
+  .controls label{
+    display:flex;align-items:center;gap:8px;
+    font-size:13px;color:#c2ccda;cursor:pointer;user-select:none;
+  }
+  .controls input[type=checkbox]{
+    appearance:none;-webkit-appearance:none;width:36px;height:20px;border-radius:20px;
+    background:#2a3240;position:relative;transition:background .2s;cursor:pointer;margin:0;flex:none;
+  }
+  .controls input[type=checkbox]::after{
+    content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;
+    background:#8b97a8;transition:.2s;
+  }
+  .controls input[type=checkbox]:checked{background:#1f5a4b}
+  .controls input[type=checkbox]:checked::after{left:18px;background:#4dd4ac}
+
+  select, input[type=number], input[type=text]{
+    background:#1b2129;color:#e8eef6;border:1px solid #2c3542;border-radius:8px;
+    padding:6px 10px;font-size:13px;font-family:inherit;cursor:pointer;outline:none;
+  }
+  select:focus, input:focus{border-color:#4dd4ac}
+
+  button{
+    background:#1b2129;color:#e8eef6;border:1px solid #2c3542;border-radius:8px;
+    padding:6px 14px;font-size:13px;font-family:inherit;cursor:pointer;
+    transition:background .15s, border-color .15s;
+  }
+  button:hover{background:#253040;border-color:#4dd4ac}
+
+  input[type=color]{
+    width:36px;height:26px;padding:0;border:1px solid #2c3542;border-radius:6px;
+    background:#1b2129;cursor:pointer;
+  }
+
+  .tuning-top{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:center;margin-bottom:12px;}
+  .tuning-top label{display:flex;align-items:center;gap:8px;font-size:13px;color:#c2ccda;}
+  .string-tuners{display:flex;flex-wrap:wrap;gap:8px 14px;justify-content:center;}
+  .string-tuner{display:flex;align-items:center;gap:6px;}
+  .string-tuner .string-label{font-size:12px;color:#8b97a8;min-width:26px;text-align:right;}
+  .string-tuner select{padding:5px 8px;font-size:12px;min-width:76px;}
+
+  .note-grid{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:12px;}
+  .note-btn{
+    width:46px;height:40px;border-radius:8px;
+    background:#1b2129;border:1px solid #2c3542;
+    color:#c2ccda;font-size:12px;font-family:inherit;
+    cursor:pointer;transition:all .15s;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .note-btn:hover{background:#253040;border-color:#4dd4ac;color:#e8eef6}
+  .note-btn.active{background:#2a4a3e;border-color:#4dd4ac;color:#4dd4ac;font-weight:700;}
+
+  .chord-controls{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:center;justify-content:center;}
+  .chord-controls label{display:flex;align-items:center;gap:8px;font-size:13px;color:#c2ccda;}
+  .chord-controls input[type=number]{width:70px;text-align:center;}
+
+  .chord-info{text-align:center;margin-top:10px;font-size:14px;color:#c2ccda;min-height:22px;}
+  .chord-info b{color:#f0a030}
+  .chord-info .chord-name{font-size:18px;font-weight:700;color:#ffd060;}
+
+  #board{max-width:1080px;margin:0 auto 18px;filter:drop-shadow(0 18px 40px rgba(0,0,0,.55));}
+  svg{width:100%;height:auto;display:block;}
+
+  #info{text-align:center;margin-top:8px;color:#8b97a8;font-size:14px;min-height:22px;}
+  #info b{color:#4dd4ac;font-weight:600;}
+
+  .cell{
+    fill:rgba(255,255,255,0);
+    pointer-events:all;
+    cursor:pointer;
+    transition:fill .16s ease;
+  }
+  .cell:hover{fill:rgba(255,255,255,.13)}
+  .cell.hl{fill:rgba(77,212,172,.22)}
+  .cell.hl:hover{fill:rgba(77,212,172,.38)}
+  .cell.chord-tone{fill:rgba(240,160,48,.28)}
+  .cell.chord-tone:hover{fill:rgba(240,160,48,.45)}
+  .cell.chord-root{fill:rgba(255,80,80,.38)}
+  .cell.chord-root:hover{fill:rgba(255,80,80,.55)}
+  .cell.scale-tone{fill:rgba(80,170,255,.22)}
+  .cell.scale-tone:hover{fill:rgba(80,170,255,.38)}
+  .cell.scale-root{fill:rgba(60,140,255,.42)}
+  .cell.scale-root:hover{fill:rgba(60,140,255,.58)}
+  .cell.flash{fill:rgba(120,220,255,.65) !important}
+
+  .lbl{
+    font-family:inherit;font-weight:500;fill:#eaf1f8;text-anchor:middle;
+    pointer-events:none;user-select:none;paint-order:stroke;
+    stroke:rgba(0,0,0,.45);stroke-width:2.5px;transition:fill .15s;
+  }
+  .lbl.hl{fill:#4dd4ac;font-weight:700}
+  .lbl.chord-tone{fill:#ffd060;font-weight:700}
+  .lbl.chord-root{fill:#ff7070;font-weight:800}
+  .lbl.scale-tone{fill:#7ec0ff;font-weight:700}
+  .lbl.scale-root{fill:#4aa8ff;font-weight:800}
+
+  .fret-num{
+    fill:#8b97a8;text-anchor:middle;user-select:none;font-family:inherit;
+    transition:fill .2s;
+  }
+  .fret-num.mark{fill:#4dd4ac;font-weight:600}
+  .fret-num.available{font-weight:800;cursor:pointer}
+  .fret-num.active-base{
+    text-decoration:underline;
+  }
+
+  /* Scale builder */
+  .scale-presets{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:10px 0;}
+  .scale-preset{
+    padding:5px 12px;font-size:12px;font-family:inherit;
+    border-radius:6px;background:#1b2129;border:1px solid #2c3542;color:#c2ccda;
+    cursor:pointer;transition:all .15s;
+  }
+  .scale-preset:hover{border-color:#4aa8ff;color:#4aa8ff}
+
+  .scale-pos-list{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:6px;}
+  .scale-pos-btn{
+    padding:4px 10px;font-size:12px;font-family:inherit;
+    border-radius:6px;background:#1b2129;border:1px solid #2c3542;color:#c2ccda;
+    cursor:pointer;transition:all .15s;
+  }
+  .scale-pos-btn:hover{border-color:#4aa8ff;color:#4aa8ff}
+  .scale-pos-btn.active{background:#1a3855;border-color:#4aa8ff;color:#4aa8ff;font-weight:700}
+
+  .scale-info b{color:#4aa8ff}
+  .scale-info .scale-name{font-size:18px;font-weight:700;color:#7ec0ff}
+
+  .deg-hint{font-size:11px;color:#6b7788;text-align:center;margin-top:4px;}
+</style>
+</head>
+<body>
+
+  <button id="langToggle" class="lang-toggle" title="Switch language / Сменить язык">EN</button>
+
+  <h1 data-i18n="title">Гриф гитары · 0–24 лад</h1>
+  <p class="sub" data-i18n="subtitle">Интерактивный гриф · нажмите на лад, чтобы услышать ноту</p>
+
+  <div class="panel">
+    <div class="panel-title" data-i18n="tuningPanel">Строй гитары</div>
+    <div class="tuning-top">
+      <label><span data-i18n="preset">Пресет:</span>
+        <select id="tuningPreset"></select>
+      </label>
+      <button id="resetTuning" data-i18n="reset">Сбросить</button>
+    </div>
+    <div class="string-tuners" id="stringTuners"></div>
+  </div>
+
+  <div class="panel">
+    <div class="controls">
+      <label><input type="checkbox" id="showNotes" checked><span data-i18n="showNotes">Показывать ноты</span></label>
+      <label><input type="checkbox" id="useFlats"><span data-i18n="useFlats">Бемоли (♭)</span></label>
+      <label><span data-i18n="highlightNote">Подсветить ноту</span><select id="hl"></select></label>
+      <label><span data-i18n="availColor">Цвет доступных ладов</span> <input type="color" id="availColor" value="#ffa040"></label>
+    </div>
+  </div>
+
+  <div id="board"></div>
+
+  <div class="panel">
+    <div class="panel-title" data-i18n="chordBuilder">Конструктор аккордов</div>
+    <div class="note-grid" id="noteGrid"></div>
+    <div class="chord-controls">
+      <label><span data-i18n="baseFret">Базовый лад:</span> <input type="number" id="baseFret" min="0" max="15" value="0"></label>
+      <button id="playChord" data-i18n="play">▶ Играть</button>
+      <button id="clearChord" data-i18n="clear">Очистить</button>
+    </div>
+    <div class="chord-info" id="chordInfo">Выберите ноты для построения аккорда</div>
+    <div class="chord-info" id="chordPositions" style="font-size:13px;margin-top:4px;"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title" data-i18n="scaleBuilder">Конструктор гамм</div>
+    <div class="chord-controls">
+      <label><span data-i18n="rootNote">Тоника:</span>
+        <select id="scaleRoot"></select>
+      </label>
+      <label><span data-i18n="degrees">Ступени:</span>
+        <input type="text" id="scaleDegrees" value="1-3-5-6-8-10-12" placeholder="1-3-5-6-8-10-12" style="width:190px;text-align:center">
+      </label>
+      <button id="applyScale" data-i18n="apply">Применить</button>
+      <button id="playScaleBtn" data-i18n="playScale">▶ Играть гамму</button>
+      <button id="clearScale" data-i18n="clear">Очистить</button>
+      <label><input type="checkbox" id="showDegrees"><span data-i18n="showDegrees">Ступени на грифе</span></label>
+    </div>
+    <div class="deg-hint" id="degHint"></div>
+    <div class="scale-presets" id="scalePresets"></div>
+    <div class="chord-info scale-info" id="scaleInfo">Введите ступени и тонику для построения гаммы</div>
+    <div class="chord-info" id="scalePositions" style="font-size:13px;margin-top:4px;"></div>
+  </div>
+
+  <div id="info">Нажмите на любую точку грифа</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  const $ = id => document.getElementById(id);
+
+  // Геометрия. Значения подобраны "на глаз" под viewBox 880x330,
+  // менять надо вместе с W/H или SVG поедет.
+  const BOARD_W       = 880;
+  const BOARD_H       = 330;
+  const NUT_X         = 60;   // x координата порожка
+  const FB_LENGTH     = 1000; // виртуальная длина грифа до 24 лада
+  const MAX_FRET      = 24;
+  const STRING_COUNT  = 6;
+  const TOP_STRING_Y  = 70;
+  const STRING_SPACING = 36;
+  const BOARD_LEFT    = 10;
+
+  const SHARPS = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  const FLATS  = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+
+  const SINGLE_DOT_FRETS = [3, 5, 7, 9, 15, 17, 21];
+  const DOUBLE_DOT_FRETS = [12, 24];
+  const MARKED_FRETS     = [3, 5, 7, 9, 12, 15, 17, 19, 21, 24];
+
+  // Открытые струны в MIDI, начиная с низкой E. Порядок совпадает с yOf().
+  const DEFAULT_TUNING = [40, 45, 50, 55, 59, 64];
+
+  // ---------- локализация ----------
+  let lang = 'ru';
+
+  const I18N = {
+    ru: {
+      docTitle: 'Гриф гитары — 0–24 лад',
+      title: 'Гриф гитары · 0–24 лад',
+      subtitle: 'Интерактивный гриф · нажмите на лад, чтобы услышать ноту',
+      tuningPanel: 'Строй гитары',
+      preset: 'Пресет:',
+      reset: 'Сбросить',
+      showNotes: 'Показывать ноты',
+      useFlats: 'Бемоли (♭)',
+      highlightNote: 'Подсветить ноту',
+      noHighlight: 'нет',
+      availColor: 'Цвет доступных ладов',
+      chordBuilder: 'Конструктор аккордов',
+      baseFret: 'Базовый лад:',
+      play: '▶ Играть',
+      clear: 'Очистить',
+      chordHint: 'Выберите ноты для построения аккорда',
+      chordNeedMore: 'Добавьте ещё ноты (нужно минимум 2)',
+      chordLabel: 'Аккорд: ',
+      notesLabel: 'Ноты: ',
+      notStandard: ' — не распознан как стандартный аккорд',
+      availableAt: 'Доступен на ладах: ',
+      clickToJump: '(клик по номеру — перейти)',
+      noFingering: 'Стандартная аппликатура не найдена — попробуйте другой набор нот или базовый лад',
+      infoHint: 'Нажмите на любую точку грифа',
+      openString: 'открытая струна',
+      fretN: n => n + '-й лад',
+      stringShort: n => n + '-я',
+      stringInfo: (n, note, fretTxt) => n + '-я струна (' + note + '), ' + fretTxt,
+
+      scaleBuilder: 'Конструктор гамм',
+      rootNote: 'Тоника:',
+      degrees: 'Ступени:',
+      apply: 'Применить',
+      playScale: '▶ Играть гамму',
+      showDegrees: 'Ступени на грифе',
+      scaleHint: 'Введите ступени и тонику для построения гаммы',
+      degreeHint: 'Ступени по хроматизму: 1 = тоника, 2 = +1 полутон, 3 = +2, …, 12 = +11 полутонов. Можно писать 13, 14 и т.д. для следующей октавы.',
+      scaleLabel: 'Гамма: ',
+      degreeLabel: 'ступень ',
+      invalidDegrees: 'Некорректная последовательность ступеней',
+      availablePositions: 'Доступные позиции:',
+      noPositions: 'Позиции не найдены',
+      scaleNames: {
+        'Major': 'Мажор',
+        'Natural minor': 'Натуральный минор',
+        'Harmonic minor': 'Гармонический минор',
+        'Melodic minor': 'Мелодический минор',
+        'Major pentatonic': 'Мажорная пентатоника',
+        'Minor pentatonic': 'Минорная пентатоника',
+        'Blues': 'Блюз',
+        'Dorian': 'Дорийский',
+        'Phrygian': 'Фригийский',
+        'Lydian': 'Лидийский',
+        'Mixolydian': 'Миксолидийский',
+        'Locrian': 'Локрийский'
+      }
+    },
+    en: {
+      docTitle: 'Guitar Fretboard — Frets 0–24',
+      title: 'Guitar Fretboard · Frets 0–24',
+      subtitle: 'Interactive fretboard · click a fret to hear the note',
+      tuningPanel: 'Guitar Tuning',
+      preset: 'Preset:',
+      reset: 'Reset',
+      showNotes: 'Show notes',
+      useFlats: 'Flats (♭)',
+      highlightNote: 'Highlight note',
+      noHighlight: 'none',
+      availColor: 'Available fret color',
+      chordBuilder: 'Chord Builder',
+      baseFret: 'Base fret:',
+      play: '▶ Play',
+      clear: 'Clear',
+      chordHint: 'Select notes to build a chord',
+      chordNeedMore: 'Add more notes (at least 2)',
+      chordLabel: 'Chord: ',
+      notesLabel: 'Notes: ',
+      notStandard: ' — not recognized as a standard chord',
+      availableAt: 'Available at frets: ',
+      clickToJump: '(click a number to jump)',
+      noFingering: 'No standard fingering found — try another note set or base fret',
+      infoHint: 'Click anywhere on the fretboard',
+      openString: 'open string',
+      fretN: n => 'fret ' + n,
+      stringShort: n => n + (['st','nd','rd'][n - 1] || 'th'),
+      stringInfo: (n, note, fretTxt) => 'String ' + n + ' (' + note + '), ' + fretTxt,
+
+      scaleBuilder: 'Scale Builder',
+      rootNote: 'Root:',
+      degrees: 'Degrees:',
+      apply: 'Apply',
+      playScale: '▶ Play scale',
+      showDegrees: 'Degrees on fretboard',
+      scaleHint: 'Enter degrees and root to build a scale',
+      degreeHint: 'Chromatic degrees: 1 = root, 2 = +1 semitone, 3 = +2, …, 12 = +11 semitones. Use 13, 14, … for the next octave.',
+      scaleLabel: 'Scale: ',
+      degreeLabel: 'degree ',
+      invalidDegrees: 'Invalid degree sequence',
+      availablePositions: 'Available positions:',
+      noPositions: 'No positions found',
+      scaleNames: {
+        'Major': 'Major',
+        'Natural minor': 'Natural minor',
+        'Harmonic minor': 'Harmonic minor',
+        'Melodic minor': 'Melodic minor',
+        'Major pentatonic': 'Major pentatonic',
+        'Minor pentatonic': 'Minor pentatonic',
+        'Blues': 'Blues',
+        'Dorian': 'Dorian',
+        'Phrygian': 'Phrygian',
+        'Lydian': 'Lydian',
+        'Mixolydian': 'Mixolydian',
+        'Locrian': 'Locrian'
+      }
+    }
+  };
+
+  const t = () => I18N[lang];
+
+  // ---------- позиции ладов ----------
+  // Лады на гитаре расположены по логарифму — 12-й лад ровно посередине.
+  const fretX = [NUT_X];
+  for (let n = 1; n <= MAX_FRET; n++) {
+    fretX.push(NUT_X + FB_LENGTH * (1 - Math.pow(2, -n / 12)));
+  }
+  const BOARD_RIGHT  = fretX[MAX_FRET] + 22;
+  const BOARD_TOP    = TOP_STRING_Y - 22;
+  const BOARD_BOTTOM = TOP_STRING_Y + (STRING_COUNT - 1) * STRING_SPACING + 22;
+
+  // низкая E снизу, высокая сверху — как на картинках гитары
+  const yOf = i => TOP_STRING_Y + (STRING_COUNT - 1 - i) * STRING_SPACING;
+
+  // ---------- состояние ----------
+  const state = {
+    STRINGS_MIDI: DEFAULT_TUNING.slice(),
+    showNotes: true,
+    useFlats: false,
+    hlPc: -1,
+    chordNotes: new Set(),
+    baseFret: 0,
+    _rootPc: null,
+    availableFrets: new Set(),
+    availColor: '#ffa040',
+
+    scaleActive: false,
+    scaleRootPc: 0,
+    scaleDegrees: [],
+    scalePcs: new Set(),
+    scaleDegreeMap: new Map(),
+    scalePositions: [],
+    scaleSelectedPos: null,
+    showDegrees: false
+  };
+
+  // Пресеты хранятся high→low для удобства чтения (как гитарист думает),
+  // а в state.STRINGS_MIDI раскладываем наоборот — applyPreset() это делает.
+  const PRESETS = {
+    standard:     { notes: [64, 59, 55, 50, 45, 40], ru: 'Стандартный (E A D G B E)',          en: 'Standard (E A D G B E)' },
+    dropD:        { notes: [64, 59, 55, 50, 45, 38], ru: 'Drop D (D A D G B E)',               en: 'Drop D (D A D G B E)' },
+    dropC:        { notes: [62, 57, 53, 48, 43, 36], ru: 'Drop C (C G C F A D)',               en: 'Drop C (C G C F A D)' },
+    openG:        { notes: [62, 59, 55, 50, 43, 38], ru: 'Open G (D G D G B D)',               en: 'Open G (D G D G B D)' },
+    openD:        { notes: [62, 57, 54, 50, 45, 38], ru: 'Open D (D A D F# A D)',              en: 'Open D (D A D F# A D)' },
+    openE:        { notes: [64, 59, 56, 52, 47, 40], ru: 'Open E (E B E G# B E)',              en: 'Open E (E B E G# B E)' },
+    DADGAD:       { notes: [62, 57, 55, 50, 45, 38], ru: 'DADGAD (D A D G A D)',               en: 'DADGAD (D A D G A D)' },
+    halfStepDown: { notes: [63, 58, 54, 49, 44, 39], ru: 'Полутоном ниже (Eb Ab Db Gb Bb Eb)', en: 'Half step down (Eb Ab Db Gb Bb Eb)' },
+    fullStepDown: { notes: [62, 57, 53, 48, 43, 38], ru: 'На тон ниже (D G C F A D)',          en: 'Full step down (D G C F A D)' },
+    custom:       { notes: null,                     ru: 'Свой',                                en: 'Custom' }
+  };
+
+  // ---------- мелкие утилиты ----------
+  function mk(tag, attrs) {
+    const e = document.createElementNS(SVG_NS, tag);
+    if (attrs) for (const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  const pcOf = midi => ((midi % 12) + 12) % 12;
+  const noteName = midi => (state.useFlats ? FLATS : SHARPS)[pcOf(midi)];
+  const noteNameOct = midi => noteName(midi) + (Math.floor(midi / 12) - 1);
+
+  // ---------- SVG ----------
+  let svg, cellsGroup, barreGroup, labelsGroup, scaleOverlayGroup;
+  let cells = [];
+  let fretNumEls = {};
+
+  function renderFretboard() {
+    const board = $('board');
+    board.innerHTML = '';
+    fretNumEls = {};
+
+    svg = mk('svg', { viewBox: `0 0 ${BOARD_W} ${BOARD_H}` });
+    board.appendChild(svg);
+
+    const defs = mk('defs');
+    const grad = mk('linearGradient', { id: 'wood', x1: 0, y1: 0, x2: 0, y2: 1 });
+    grad.appendChild(mk('stop', { offset: '0%',   'stop-color': '#452f20' }));
+    grad.appendChild(mk('stop', { offset: '55%',  'stop-color': '#332115' }));
+    grad.appendChild(mk('stop', { offset: '100%', 'stop-color': '#22150e' }));
+    defs.appendChild(grad);
+    svg.appendChild(defs);
+
+    svg.appendChild(mk('rect', {
+      x: BOARD_LEFT, y: BOARD_TOP,
+      width: BOARD_RIGHT - BOARD_LEFT,
+      height: BOARD_BOTTOM - BOARD_TOP,
+      rx: 8, fill: 'url(#wood)', stroke: '#191009', 'stroke-width': 1.5
+    }));
+
+    const midY = (BOARD_TOP + BOARD_BOTTOM) / 2;
+    SINGLE_DOT_FRETS.forEach(n => {
+      svg.appendChild(mk('circle', {
+        cx: (fretX[n - 1] + fretX[n]) / 2, cy: midY, r: 6,
+        fill: '#e7e2d6', opacity: 0.8
+      }));
+    });
+    DOUBLE_DOT_FRETS.forEach(n => {
+      const cx = (fretX[n - 1] + fretX[n]) / 2;
+      [midY - 28, midY + 28].forEach(cy => {
+        svg.appendChild(mk('circle', { cx, cy, r: 6, fill: '#e7e2d6', opacity: 0.8 }));
+      });
+    });
+
+    for (let n = 1; n <= MAX_FRET; n++) {
+      svg.appendChild(mk('line', {
+        x1: fretX[n], y1: BOARD_TOP + 2, x2: fretX[n], y2: BOARD_BOTTOM - 2,
+        stroke: '#c9d2dd', 'stroke-width': n <= 12 ? 2.6 : 2, opacity: 0.75
+      }));
+    }
+
+    svg.appendChild(mk('rect', {
+      x: NUT_X - 3, y: BOARD_TOP, width: 6, height: BOARD_BOTTOM - BOARD_TOP,
+      fill: '#efe9dc', rx: 2
+    }));
+
+    // Толщины струн high→low (индекс 0 = высокая E, рисуется сверху).
+    const stringWidths = [1.5, 2.0, 2.6, 3.2, 3.9, 4.6];
+    for (let i = 0; i < STRING_COUNT; i++) {
+      svg.appendChild(mk('line', {
+        x1: BOARD_LEFT, y1: yOf(i), x2: BOARD_RIGHT, y2: yOf(i),
+        stroke: '#d7dee7', 'stroke-width': stringWidths[i],
+        'stroke-linecap': 'round', opacity: 0.9, 'pointer-events': 'none'
+      }));
+    }
+
+    cellsGroup        = mk('g'); svg.appendChild(cellsGroup);
+    scaleOverlayGroup = mk('g'); svg.appendChild(scaleOverlayGroup);
+    barreGroup        = mk('g'); svg.appendChild(barreGroup);
+    labelsGroup       = mk('g'); svg.appendChild(labelsGroup);
+
+    buildCells();
+    buildFretNumbers();
+    applyAll();
+  }
+
+  function buildCells() {
+    cells = [];
+    for (let s = 0; s < STRING_COUNT; s++) {
+      const y = yOf(s);
+      for (let f = 0; f <= MAX_FRET; f++) {
+        const x0 = (f === 0) ? BOARD_LEFT : fretX[f - 1];
+        const x1 = fretX[f];
+        const w  = x1 - x0;
+
+        const rect = mk('rect', {
+          x: x0 + 1.5, y: y - 15,
+          width: Math.max(3, w - 3), height: 30, rx: 4,
+          class: 'cell'
+        });
+
+        const midi = state.STRINGS_MIDI[s] + f;
+        const pc   = pcOf(midi);
+        const fs   = f <= 9 ? 12 : (f <= 16 ? 11 : 10);
+
+        const txt = mk('text', {
+          x: (x0 + x1) / 2, y: y + 4.5,
+          class: 'lbl', 'font-size': fs
+        });
+        txt.textContent = noteName(midi);
+
+        cellsGroup.appendChild(rect);
+        labelsGroup.appendChild(txt);
+
+        const cell = { rect, txt, pc, midi, string: s, fret: f };
+
+        rect.addEventListener('click', () => {
+          playNote(midi);
+          rect.classList.add('flash');
+          setTimeout(() => rect.classList.remove('flash'), 200);
+          showInfo(cell);
+        });
+
+        cells.push(cell);
+      }
+    }
+  }
+
+  function buildFretNumbers() {
+    for (let n = 1; n <= MAX_FRET; n++) {
+      const marked = MARKED_FRETS.indexOf(n) !== -1;
+      const el = mk('text', {
+        x: (fretX[n - 1] + fretX[n]) / 2,
+        y: BOARD_BOTTOM + 24,
+        class: 'fret-num' + (marked ? ' mark' : ''),
+        'font-size': n >= 20 ? 9.5 : 11,
+        'data-fret': n
+      });
+      el.textContent = n;
+      el.addEventListener('click', () => {
+        const inp = $('baseFret');
+        inp.value = n;
+        state.baseFret = n;
+        updateBarre();
+        highlightAvailable();
+      });
+      svg.appendChild(el);
+      fretNumEls[n] = el;
+    }
+  }
+
+  // ---------- подсветка ----------
+  function refresh() {
+    const showLabels = state.showNotes;
+
+    cells.forEach(c => {
+      const isHl        = state.hlPc === c.pc;
+      const isChord     = state.chordNotes.has(c.pc);
+      const isChordRoot = isChord && state._rootPc === c.pc;
+      const isScale     = state.scaleActive && state.scalePcs.has(c.pc);
+      const isScaleRoot = isScale && c.pc === state.scaleRootPc;
+
+      let text = noteName(c.midi);
+      if (state.showDegrees && isScale) {
+        const deg = state.scaleDegreeMap.get(c.pc);
+        if (deg) text = deg;
+      }
+      c.txt.textContent = text;
+
+      const hasAny = isHl || isChord || isScale;
+      c.txt.style.display = (showLabels || hasAny) ? '' : 'none';
+
+      c.rect.classList.remove('hl','chord-tone','chord-root','scale-tone','scale-root');
+      c.txt.classList.remove('hl','chord-tone','chord-root','scale-tone','scale-root');
+
+      // приоритет: рут аккорда > тон аккорда > рут гаммы > тон гаммы > просто подсветка
+      if (isChordRoot) {
+        c.rect.classList.add('chord-root'); c.txt.classList.add('chord-root');
+      } else if (isChord) {
+        c.rect.classList.add('chord-tone'); c.txt.classList.add('chord-tone');
+      } else if (isScaleRoot) {
+        c.rect.classList.add('scale-root'); c.txt.classList.add('scale-root');
+      } else if (isScale) {
+        c.rect.classList.add('scale-tone'); c.txt.classList.add('scale-tone');
+      } else if (isHl) {
+        c.rect.classList.add('hl'); c.txt.classList.add('hl');
+      }
+    });
+  }
+
+  // ---------- распознавание аккорда ----------
+  const CHORD_TYPES = [
+    { name: '',        intervals: [0, 4, 7] },
+    { name: 'm',       intervals: [0, 3, 7] },
+    { name: 'dim',     intervals: [0, 3, 6] },
+    { name: 'aug',     intervals: [0, 4, 8] },
+    { name: 'sus2',    intervals: [0, 2, 7] },
+    { name: 'sus4',    intervals: [0, 5, 7] },
+    { name: 'maj7',    intervals: [0, 4, 7, 11] },
+    { name: '7',       intervals: [0, 4, 7, 10] },
+    { name: 'm7',      intervals: [0, 3, 7, 10] },
+    { name: 'dim7',    intervals: [0, 3, 6, 9] },
+    { name: 'm7b5',    intervals: [0, 3, 6, 10] },
+    { name: 'mMaj7',   intervals: [0, 3, 7, 11] },
+    { name: 'aug7',    intervals: [0, 4, 8, 10] },
+    { name: '6',       intervals: [0, 4, 7, 9] },
+    { name: 'm6',      intervals: [0, 3, 7, 9] },
+    { name: 'add9',    intervals: [0, 2, 4, 7] },
+    { name: 'madd9',   intervals: [0, 2, 3, 7] },
+    { name: '9',       intervals: [0, 2, 4, 7, 10] },
+    { name: 'maj9',    intervals: [0, 2, 4, 7, 11] },
+    { name: 'm9',      intervals: [0, 2, 3, 7, 10] },
+    { name: '7sus4',   intervals: [0, 5, 7, 10] },
+    { name: '7sus2',   intervals: [0, 2, 7, 10] },
+    { name: '5',       intervals: [0, 7] },
+    { name: '7b5',     intervals: [0, 4, 6, 10] },
+    { name: '7#5',     intervals: [0, 4, 8, 10] },
+    { name: '7b9',     intervals: [0, 1, 4, 7, 10] },
+    { name: '7#9',     intervals: [0, 3, 4, 7, 10] },
+    { name: 'add11',   intervals: [0, 4, 5, 7] },
+    { name: 'madd11',  intervals: [0, 3, 5, 7] },
+    { name: '6/9',     intervals: [0, 2, 4, 7, 9] },
+    { name: 'm6/9',    intervals: [0, 2, 3, 7, 9] }
+  ];
+
+  function detectChord(pcs) {
+    if (pcs.size < 2) return null;
+    const notes = Array.from(pcs);
+    let best = null;
+
+    for (let root = 0; root < 12; root++) {
+      if (!pcs.has(root)) continue;
+      const intervals = notes.map(pc => ((pc - root) % 12 + 12) % 12).sort((a, b) => a - b);
+
+      for (const type of CHORD_TYPES) {
+        if (intervals.length !== type.intervals.length) continue;
+        if (!intervals.every((v, i) => v === type.intervals[i])) continue;
+
+        // Трезвучия более вероятны, чем надстройки — небольшой перевес в пользу простых.
+        let score = type.intervals.length * 10;
+        if (type.name === '' || type.name === 'm') score -= 3;
+
+        if (!best || score < best.score) {
+          best = { root, type: type.name, score };
+        }
+      }
+    }
+
+    if (!best) return null;
+    return { root: best.root, type: best.type, name: noteName(best.root) + best.type };
+  }
+
+  // ---------- баррэ ----------
+  // Возвращает true, если на этом ладу можно взять баррэ для текущего набора нот.
+  // Логика специально консервативная: нужно минимум 4 струны в окне 4 лада,
+  // верхняя струна должна звучать, и минимум 2 ноты на самом базовом ладу.
+  function detectBarre(chordNotes, baseFret) {
+    if (chordNotes.size === 0 || baseFret === 0) return null;
+
+    const suggested = [];
+    for (let s = 0; s < STRING_COUNT; s++) {
+      let found = null;
+      for (let f = baseFret; f <= Math.min(baseFret + 4, MAX_FRET); f++) {
+        const midi = state.STRINGS_MIDI[s] + f;
+        if (chordNotes.has(pcOf(midi))) {
+          found = { fret: f, pc: pcOf(midi) };
+          break;
+        }
+      }
+      suggested.push(found);
+    }
+
+    const playableIndices = [];
+    for (let s = 0; s < STRING_COUNT; s++) if (suggested[s]) playableIndices.push(s);
+    if (playableIndices.length < 4) return null;
+
+    const minP = Math.min(...playableIndices);
+    const maxP = Math.max(...playableIndices);
+    if (maxP !== STRING_COUNT - 1) return null;
+    if (maxP - minP + 1 !== playableIndices.length) return null;
+
+    const atBase = suggested.filter(s => s && s.fret === baseFret).length;
+    if (atBase < 2) return null;
+
+    return {
+      fret: baseFret,
+      fromString: minP,
+      toString: maxP,
+      suggested,
+      playable: playableIndices.length
+    };
+  }
+
+  function findAllAvailableFrets(chordNotes) {
+    const result = new Set();
+    if (chordNotes.size < 2) return result;
+
+    for (let f = 1; f <= MAX_FRET - 3; f++) {
+      if (detectBarre(chordNotes, f)) result.add(f);
+    }
+
+    // Открытая позиция — отдельная эвристика, потому что detectBarre(., 0) не считает.
+    for (let testF = 0; testF <= 2; testF++) {
+      const covered = new Set();
+      const usedStrings = new Set();
+      for (let s = 0; s < STRING_COUNT; s++) {
+        for (let fr = 0; fr <= Math.max(3, testF + 3); fr++) {
+          const pc = pcOf(state.STRINGS_MIDI[s] + fr);
+          if (chordNotes.has(pc)) {
+            covered.add(pc);
+            usedStrings.add(s);
+            break;
+          }
+        }
+      }
+      if (covered.size === chordNotes.size && usedStrings.size >= 3) {
+        result.add(0);
+        break;
+      }
+    }
+
+    return result;
+  }
+
+  function updateBarre() {
+    if (!barreGroup) return;
+    barreGroup.innerHTML = '';
+
+    if (state.baseFret >= 1 && state.baseFret <= MAX_FRET) {
+      const x0 = fretX[state.baseFret - 1];
+      const x1 = fretX[state.baseFret];
+      barreGroup.appendChild(mk('rect', {
+        x: x0 + 1, y: BOARD_TOP + 2,
+        width: x1 - x0 - 2, height: BOARD_BOTTOM - BOARD_TOP - 4,
+        fill: 'rgba(255, 160, 60, 0.10)',
+        rx: 3, 'pointer-events': 'none'
+      }));
+    }
+
+    const barre = detectBarre(state.chordNotes, state.baseFret);
+    if (!barre || barre.fret < 1) return;
+
+    const x0 = fretX[barre.fret - 1];
+    const x1 = fretX[barre.fret];
+    const midX = (x0 + x1) / 2;
+    const barW = Math.max(14, (x1 - x0) * 0.55);
+    const yTop = yOf(barre.toString);
+    const yBot = yOf(barre.fromString);
+
+    barreGroup.appendChild(mk('rect', {
+      x: midX - barW / 2,
+      y: yTop - 9,
+      width: barW,
+      height: (yBot - yTop) + 18,
+      rx: barW / 2,
+      fill: 'rgba(255, 120, 60, 0.35)',
+      stroke: 'rgba(255, 140, 80, 0.7)',
+      'stroke-width': 1.5,
+      'pointer-events': 'none'
+    }));
+
+    for (let s = 0; s < STRING_COUNT; s++) {
+      const sg = barre.suggested[s];
+      if (!sg || sg.fret === barre.fret) continue;
+      const cx = (fretX[sg.fret - 1] + fretX[sg.fret]) / 2;
+      barreGroup.appendChild(mk('circle', {
+        cx, cy: yOf(s), r: 7,
+        fill: 'rgba(255, 200, 100, 0.5)',
+        stroke: 'rgba(255, 200, 100, 0.9)',
+        'stroke-width': 1.5,
+        'pointer-events': 'none'
+      }));
+    }
+  }
+
+  function highlightAvailable() {
+    const color = state.availColor;
+
+    for (let n = 1; n <= MAX_FRET; n++) {
+      const el = fretNumEls[n];
+      if (!el) continue;
+      el.classList.remove('available');
+      el.style.fill = '';
+      el.style.textDecoration = '';
+
+      if (state.availableFrets.has(n)) {
+        el.classList.add('available');
+        el.style.fill = color;
+      }
+    }
+
+    const activeEl = fretNumEls[state.baseFret];
+    if (activeEl) activeEl.style.textDecoration = 'underline';
+  }
+
+  function updateChordInfo() {
+    const L = t();
+    const el = $('chordInfo');
+    const posEl = $('chordPositions');
+
+    if (state.chordNotes.size < 2) {
+      el.textContent = state.chordNotes.size === 0 ? L.chordHint : L.chordNeedMore;
+      posEl.textContent = '';
+      state._rootPc = null;
+      state.availableFrets = new Set();
+      return;
+    }
+
+    const chord = detectChord(state.chordNotes);
+    state._rootPc = chord ? chord.root : null;
+
+    if (chord) {
+      el.innerHTML = L.chordLabel + '<span class="chord-name">' + chord.name + '</span>';
+    } else {
+      const names = Array.from(state.chordNotes).sort((a, b) => a - b)
+        .map(pc => (state.useFlats ? FLATS : SHARPS)[pc]);
+      el.innerHTML = L.notesLabel + '<b>' + names.join(' ') + '</b>' + L.notStandard;
+    }
+
+    state.availableFrets = findAllAvailableFrets(state.chordNotes);
+
+    if (state.availableFrets.size > 0) {
+      const sorted = Array.from(state.availableFrets).sort((a, b) => a - b);
+      posEl.innerHTML = L.availableAt +
+        '<b style="color:' + state.availColor + '">' + sorted.join(', ') + '</b> ' +
+        '<span style="color:#666;font-size:12px">' + L.clickToJump + '</span>';
+    } else {
+      posEl.innerHTML = '<span style="color:#8b97a8">' + L.noFingering + '</span>';
+    }
+  }
+
+  function applyAll() {
+    updateChordInfo();
+    refresh();
+    updateBarre();
+    highlightAvailable();
+    updateScaleInfo();
+    updateScaleOverlay();
+  }
+
+  // ---------- звук ----------
+  // Chrome/Safari не дадут создать AudioContext без пользовательского жеста,
+  // поэтому создаём лениво из первого клика по ладу / кнопке.
+  // FIXME: на старых iOS (до 14.5) всё ещё нужен webkitAudioContext.
+  let audioCtx = null;
+  function getAudio() {
+    if (!audioCtx) {
+      const Ctor = window.AudioContext || window.webkitAudioContext;
+      if (!Ctor) return null; // очень старый браузер или privacy-режим
+      audioCtx = new Ctor();
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+
+  function playNote(midi) {
+    const ctx = getAudio();
+    if (!ctx) return;
+
+    const now  = ctx.currentTime;
+    const freq = 440 * Math.pow(2, (midi - 69) / 12);
+
+    const osc = ctx.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.value = freq;
+
+    // Пила + затухающий lowpass звучит ближе к гитаре, чем чистый осциллятор.
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.Q.value = 1.2;
+    filter.frequency.setValueAtTime(Math.min(freq * 14, 12000), now);
+    filter.frequency.exponentialRampToValueAtTime(Math.max(freq * 2.5, 250), now + 0.7);
+
+    const env = ctx.createGain();
+    env.gain.setValueAtTime(0.0001, now);
+    env.gain.exponentialRampToValueAtTime(0.22, now + 0.008);
+    env.gain.exponentialRampToValueAtTime(0.0001, now + 1.4);
+
+    osc.connect(filter).connect(env).connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 1.5);
+  }
+
+  function playChord() {
+    if (state.chordNotes.size === 0) return;
+
+    const barre = detectBarre(state.chordNotes, state.baseFret);
+    if (barre) {
+      // имитируем "удар" по струнам — снизу вверх с небольшой задержкой
+      for (let s = 0; s < STRING_COUNT; s++) {
+        const sg = barre.suggested[s];
+        if (!sg) continue;
+        const midi = state.STRINGS_MIDI[s] + sg.fret;
+        setTimeout(() => playNote(midi), s * 40);
+      }
+      return;
+    }
+
+    const notes = Array.from(state.chordNotes).sort((a, b) => a - b);
+    notes.forEach((pc, i) => {
+      let midi = pc;
+      while (midi < 40) midi += 12; // не хотим играть ниже открытой E
+      setTimeout(() => playNote(midi), i * 60);
+    });
+  }
+
+  function showInfo(cell) {
+    const L = t();
+    const displayStringNum = STRING_COUNT - cell.string;
+    const fretTxt = cell.fret === 0 ? L.openString : L.fretN(cell.fret);
+
+    let html = L.stringInfo(displayStringNum, noteName(state.STRINGS_MIDI[cell.string]), fretTxt) +
+      ' &nbsp;→&nbsp; <b>' + noteNameOct(cell.midi) + '</b>';
+
+    if (state.scaleActive && state.scalePcs.has(cell.pc)) {
+      const deg = state.scaleDegreeMap.get(cell.pc);
+      if (deg) html += ' &nbsp;·&nbsp; <span style="color:#7ec0ff">' + L.degreeLabel + deg + '</span>';
+    }
+    $('info').innerHTML = html;
+  }
+
+  // ---------- гаммы ----------
+  // Ступень N в UI = (N-1) полутонов от тоники. 13 = следующая октава.
+  function parseDegrees(str) {
+    const tokens = String(str || '').trim().split(/[-,\s]+/).filter(Boolean);
+    const out = [];
+    for (const tok of tokens) {
+      const n = parseInt(tok, 10);
+      if (isNaN(n) || n < 1) continue;
+      out.push({ degree: n, semitone: n - 1 });
+    }
+    return out;
+  }
+
+  function computeScalePcs(rootPc, degrees) {
+    const pcs = new Set();
+    for (const d of degrees) pcs.add(((rootPc + d.semitone) % 12 + 12) % 12);
+    return pcs;
+  }
+
+  function buildDegreeMap(rootPc, degrees) {
+    const map = new Map();
+    for (const d of degrees) {
+      const pc = ((rootPc + d.semitone) % 12 + 12) % 12;
+      if (!map.has(pc)) map.set(pc, String(d.degree));
+    }
+    return map;
+  }
+
+  // Позиция играбельна, если на каждой струне в окне [start; start+3] есть нота гаммы
+  // и хотя бы одна из них попадает ровно на стартовый лад (иначе это не "позиция", а кусок).
+  function isPositionPlayable(scalePcs, start) {
+    const end = Math.min(start + 3, MAX_FRET);
+    let anyAtStart = false;
+    for (let s = 0; s < STRING_COUNT; s++) {
+      let has = false;
+      for (let f = start; f <= end; f++) {
+        if (scalePcs.has(pcOf(state.STRINGS_MIDI[s] + f))) {
+          has = true;
+          if (f === start) anyAtStart = true;
+          break;
+        }
+      }
+      if (!has) return false;
+    }
+    return anyAtStart;
+  }
+
+  function findScalePositions(scalePcs) {
+    const positions = [];
+    const maxStart = Math.min(12, MAX_FRET - 3);
+    for (let f = 0; f <= maxStart; f++) {
+      if (isPositionPlayable(scalePcs, f)) positions.push(f);
+    }
+    return positions;
+  }
+
+  const SCALE_TYPES = [
+    { name: 'Major',            pcs: [0,2,4,5,7,9,11] },
+    { name: 'Natural minor',    pcs: [0,2,3,5,7,8,10] },
+    { name: 'Harmonic minor',   pcs: [0,2,3,5,7,8,11] },
+    { name: 'Melodic minor',    pcs: [0,2,3,5,7,9,11] },
+    { name: 'Major pentatonic', pcs: [0,2,4,7,9] },
+    { name: 'Minor pentatonic', pcs: [0,3,5,7,10] },
+    { name: 'Blues',            pcs: [0,3,5,6,7,10] },
+    { name: 'Dorian',           pcs: [0,2,3,5,7,9,10] },
+    { name: 'Phrygian',         pcs: [0,1,3,5,7,8,10] },
+    { name: 'Lydian',           pcs: [0,2,4,6,7,9,11] },
+    { name: 'Mixolydian',       pcs: [0,2,4,5,7,9,10] },
+    { name: 'Locrian',          pcs: [0,1,3,5,6,8,10] }
+  ];
+
+  function detectScale(rootPc, pcs) {
+    if (pcs.size < 3) return null;
+    const intervals = Array.from(pcs)
+      .map(pc => ((pc - rootPc) % 12 + 12) % 12)
+      .sort((a, b) => a - b);
+
+    for (const type of SCALE_TYPES) {
+      if (type.pcs.length !== intervals.length) continue;
+      if (type.pcs.every((v, i) => v === intervals[i])) return type.name;
+    }
+    return null;
+  }
+
+  function updateScaleOverlay() {
+    if (!scaleOverlayGroup) return;
+    scaleOverlayGroup.innerHTML = '';
+    if (!state.scaleActive || state.scaleSelectedPos === null) return;
+
+    const f = state.scaleSelectedPos;
+    const fEnd = Math.min(f + 3, MAX_FRET);
+    const x0 = (f === 0) ? BOARD_LEFT : fretX[f - 1];
+    const x1 = fretX[fEnd];
+
+    scaleOverlayGroup.appendChild(mk('rect', {
+      x: x0 - 2, y: BOARD_TOP + 2,
+      width: x1 - x0 + 4, height: BOARD_BOTTOM - BOARD_TOP - 4,
+      fill: 'rgba(80, 170, 255, 0.08)',
+      stroke: 'rgba(80, 170, 255, 0.75)',
+      'stroke-width': 2,
+      'stroke-dasharray': '6 4',
+      rx: 4,
+      'pointer-events': 'none'
+    }));
+  }
+
+  function updateScaleInfo() {
+    const L = t();
+    const el = $('scaleInfo');
+    const posEl = $('scalePositions');
+
+    if (!state.scaleActive) {
+      el.textContent = L.scaleHint;
+      posEl.innerHTML = '';
+      return;
+    }
+
+    const names = state.useFlats ? FLATS : SHARPS;
+    const rootName = names[state.scaleRootPc];
+    const scaleType = detectScale(state.scaleRootPc, state.scalePcs);
+
+    if (scaleType) {
+      const displayName = (L.scaleNames && L.scaleNames[scaleType]) || scaleType;
+      el.innerHTML = L.scaleLabel + '<span class="scale-name">' + rootName + ' ' + displayName + '</span>';
+    } else {
+      const noteNames = Array.from(state.scalePcs).sort((a, b) => a - b).map(pc => names[pc]);
+      el.innerHTML = L.notesLabel + '<b>' + noteNames.join(' ') + '</b>';
+    }
+
+    if (state.scalePositions.length === 0) {
+      posEl.innerHTML = '<span style="color:#8b97a8">' + L.noPositions + '</span>';
+      return;
+    }
+
+    posEl.innerHTML = '<div style="margin-bottom:6px;width:100%">' + L.availablePositions + '</div>';
+    
+    const wrap = document.createElement('div');
+    wrap.className = 'scale-pos-list';
+
+    state.scalePositions.forEach(f => {
+      const fEnd = Math.min(f + 3, MAX_FRET);
+      const btn = document.createElement('button');
+      btn.className = 'scale-pos-btn' + (f === state.scaleSelectedPos ? ' active' : '');
+      btn.textContent = f + '–' + fEnd;
+      
+      btn.addEventListener('click', () => {
+        state.scaleSelectedPos = (state.scaleSelectedPos === f) ? null : f;
+        updateScaleOverlay();
+        updateScaleInfo();
+      });
+      
+      wrap.appendChild(btn); 
+    });
+
+    posEl.appendChild(wrap);
+  }
+
+  function applyScaleFromUI() {
+    const rootPc = parseInt($('scaleRoot').value, 10) || 0;
+    const degrees = parseDegrees($('scaleDegrees').value);
+
+    if (degrees.length === 0) {
+      clearScaleState();
+      $('scaleInfo').textContent = t().invalidDegrees;
+      $('scalePositions').innerHTML = '';
+      refresh();
+      updateScaleOverlay();
+      return;
+    }
+
+    state.scaleRootPc = rootPc;
+    state.scaleDegrees = degrees;
+    state.scalePcs = computeScalePcs(rootPc, degrees);
+    state.scaleDegreeMap = buildDegreeMap(rootPc, degrees);
+    state.scalePositions = findScalePositions(state.scalePcs);
+    state.scaleSelectedPos = null;
+    state.scaleActive = true;
+
+    updateScaleInfo();
+    refresh();
+    updateScaleOverlay();
+  }
+
+  function clearScaleState() {
+    state.scaleActive = false;
+    state.scaleDegrees = [];
+    state.scalePcs = new Set();
+    state.scaleDegreeMap = new Map();
+    state.scalePositions = [];
+    state.scaleSelectedPos = null;
+  }
+
+  function clearScale() {
+    clearScaleState();
+    updateScaleInfo();
+    refresh();
+    updateScaleOverlay();
+  }
+
+  function playScale() {
+    if (!state.scaleActive || state.scalePcs.size === 0) return;
+
+    const rootPc = state.scaleRootPc;
+    let startMidi = 40;
+    while (pcOf(startMidi) !== rootPc && startMidi < 60) startMidi++;
+
+    const notes = [];
+    for (let midi = startMidi; midi <= startMidi + 24; midi++) {
+      if (state.scalePcs.has(pcOf(midi))) notes.push(midi);
+    }
+    notes.forEach((midi, i) => setTimeout(() => playNote(midi), i * 130));
+  }
+
+  // ---------- UI ----------
+  function buildNoteOptionsHTML() {
+    const names = state.useFlats ? FLATS : SHARPS;
+    let html = '';
+    for (let midi = 28; midi <= 76; midi++) {
+      const oct = Math.floor(midi / 12) - 1;
+      html += `<option value="${midi}">${names[midi % 12]}${oct}</option>`;
+    }
+    return html;
+  }
+
+  function buildPresetOptions() {
+    const sel = $('tuningPreset');
+    const cur = sel.value;
+    sel.innerHTML = '';
+    for (const key in PRESETS) {
+      const o = document.createElement('option');
+      o.value = key;
+      o.textContent = PRESETS[key][lang];
+      sel.appendChild(o);
+    }
+    sel.value = PRESETS[cur] ? cur : 'standard';
+  }
+
+  function buildStringTuners() {
+    const container = $('stringTuners');
+    container.innerHTML = '';
+    const optsHtml = buildNoteOptionsHTML();
+
+    for (let displayNum = 1; displayNum <= STRING_COUNT; displayNum++) {
+      const idx = STRING_COUNT - displayNum;
+      const midi = state.STRINGS_MIDI[idx];
+
+      const tuner = document.createElement('div');
+      tuner.className = 'string-tuner';
+
+      const lbl = document.createElement('span');
+      lbl.className = 'string-label';
+      lbl.textContent = t().stringShort(displayNum);
+
+      const sel = document.createElement('select');
+      sel.innerHTML = optsHtml;
+      sel.value = String(midi);
+
+      sel.addEventListener('change', (e) => {
+        state.STRINGS_MIDI[idx] = Number(e.target.value);
+        $('tuningPreset').value = 'custom';
+        renderFretboard();
+      });
+
+      tuner.appendChild(lbl);
+      tuner.appendChild(sel);
+      container.appendChild(tuner);
+    }
+  }
+
+  function applyPreset(name) {
+    const preset = PRESETS[name];
+    if (!preset || !preset.notes) return;
+    const p = preset.notes;
+    // разворачиваем high→low в low→high, чтобы совпало с state.STRINGS_MIDI
+    state.STRINGS_MIDI = [p[5], p[4], p[3], p[2], p[1], p[0]];
+  }
+
+  function buildNoteGrid() {
+    const grid = $('noteGrid');
+    grid.innerHTML = '';
+    const names = state.useFlats ? FLATS : SHARPS;
+
+    for (let pc = 0; pc < 12; pc++) {
+      const btn = document.createElement('button');
+      btn.className = 'note-btn';
+      btn.textContent = names[pc];
+      if (state.chordNotes.has(pc)) btn.classList.add('active');
+
+      btn.addEventListener('click', () => {
+        if (state.chordNotes.has(pc)) state.chordNotes.delete(pc);
+        else state.chordNotes.add(pc);
+        btn.classList.toggle('active');
+        applyAll();
+      });
+
+      grid.appendChild(btn);
+    }
+  }
+
+  function buildHlSelect() {
+    const names = state.useFlats ? FLATS : SHARPS;
+    const sel = $('hl');
+    const cur = sel.value;
+    sel.innerHTML = '<option value="-1">' + t().noHighlight + '</option>';
+    names.forEach((n, i) => {
+      const o = document.createElement('option');
+      o.value = i;
+      o.textContent = n;
+      sel.appendChild(o);
+    });
+    sel.value = cur && cur !== '' ? cur : String(state.hlPc);
+  }
+
+  function buildScaleRootSelect() {
+    const sel = $('scaleRoot');
+    const names = state.useFlats ? FLATS : SHARPS;
+    sel.innerHTML = '';
+    for (let pc = 0; pc < 12; pc++) {
+      const o = document.createElement('option');
+      o.value = pc;
+      o.textContent = names[pc];
+      sel.appendChild(o);
+    }
+    sel.value = String(state.scaleRootPc);
+  }
+
+  function buildScalePresets() {
+    const container = $('scalePresets');
+    container.innerHTML = '';
+    const L = t();
+
+    const presets = [
+      { name: L.scaleMajor,      degrees: '1-3-5-6-8-10-12' },
+      { name: L.scaleMinor,      degrees: '1-3-4-6-8-9-11' },
+      { name: L.scaleHarmMin,    degrees: '1-3-4-6-8-9-12' },
+      { name: L.scaleMajPent,    degrees: '1-3-5-8-10' },
+      { name: L.scaleMinPent,    degrees: '1-4-6-8-11' },
+      { name: L.scaleBlues,      degrees: '1-4-6-7-8-11' },
+      { name: L.scaleDorian,     degrees: '1-3-4-6-8-10-11' },
+      { name: L.scaleMixolydian, degrees: '1-3-5-6-8-10-11' }
+    ];
+
+    presets.forEach(p => {
+      const btn = document.createElement('button');
+      btn.className = 'scale-preset';
+      btn.textContent = p.name;
+      btn.title = p.degrees;
+      btn.addEventListener('click', () => {
+        $('scaleDegrees').value = p.degrees;
+        applyScaleFromUI();
+      });
+      container.appendChild(btn);
+    });
+  }
+
+  function applyStaticText() {
+    const L = t();
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (L[key] != null) el.textContent = L[key];
+    });
+    document.title = L.docTitle;
+    document.documentElement.lang = lang;
+    const hint = $('degHint');
+    if (hint) hint.textContent = L.degreeHint;
+  }
+
+  function setLanguage(next) {
+    lang = next;
+    $('langToggle').textContent = lang === 'ru' ? 'EN' : 'RU';
+    applyStaticText();
+    buildPresetOptions();
+    buildStringTuners();
+    buildNoteGrid();
+    buildHlSelect();
+    buildScaleRootSelect();
+    buildScalePresets();
+    renderFretboard();
+    updateScaleInfo();
+    $('info').textContent = t().infoHint;
+  }
+
+  function init() {
+    buildPresetOptions();
+    applyStaticText();
+
+    $('showNotes').checked = state.showNotes;
+    $('useFlats').checked  = state.useFlats;
+    $('availColor').value  = state.availColor;
+
+    $('langToggle').addEventListener('click', () => {
+      setLanguage(lang === 'ru' ? 'en' : 'ru');
+    });
+
+    $('showNotes').addEventListener('change', (e) => {
+      state.showNotes = e.target.checked;
+      refresh();
+    });
+
+    $('useFlats').addEventListener('change', (e) => {
+      state.useFlats = e.target.checked;
+      buildStringTuners();
+      buildNoteGrid();
+      buildHlSelect();
+      buildScaleRootSelect();
+      renderFretboard();
+      updateScaleInfo();
+    });
+
+    $('tuningPreset').addEventListener('change', (e) => {
+      applyPreset(e.target.value);
+      buildStringTuners();
+      renderFretboard();
+    });
+
+    $('resetTuning').addEventListener('click', () => {
+      $('tuningPreset').value = 'standard';
+      applyPreset('standard');
+      buildStringTuners();
+      renderFretboard();
+    });
+
+    const baseFretEl = $('baseFret');
+    baseFretEl.addEventListener('input', (e) => {
+      let v = Number(e.target.value);
+      if (isNaN(v)) v = 0;
+      v = Math.max(0, Math.min(15, v));
+      state.baseFret = v;
+      updateBarre();
+      highlightAvailable();
+    });
+
+    $('playChord').addEventListener('click', playChord);
+
+    $('clearChord').addEventListener('click', () => {
+      state.chordNotes.clear();
+      state.baseFret = 0;
+      baseFretEl.value = 0;
+      buildNoteGrid();
+      applyAll();
+    });
+
+    $('hl').addEventListener('change', (e) => {
+      state.hlPc = Number(e.target.value);
+      refresh();
+    });
+
+    $('availColor').addEventListener('input', (e) => {
+      state.availColor = e.target.value;
+      highlightAvailable();
+      const chord = detectChord(state.chordNotes);
+      if (chord || state.availableFrets.size > 0) updateChordInfo();
+    });
+
+    $('applyScale').addEventListener('click', applyScaleFromUI);
+    $('clearScale').addEventListener('click', clearScale);
+    $('playScaleBtn').addEventListener('click', playScale);
+
+    $('scaleDegrees').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') applyScaleFromUI();
+    });
+
+    $('scaleRoot').addEventListener('change', () => {
+      if (state.scaleActive) applyScaleFromUI();
+    });
+
+    $('showDegrees').addEventListener('change', (e) => {
+      state.showDegrees = e.target.checked;
+      refresh();
+    });
+
+    $('info').textContent = t().infoHint;
+
+    buildStringTuners();
+    buildNoteGrid();
+    buildHlSelect();
+    buildScaleRootSelect();
+    buildScalePresets();
+    renderFretboard();
+    updateScaleInfo();
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
