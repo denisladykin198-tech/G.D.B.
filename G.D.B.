@@ -110,9 +110,9 @@
     padding-bottom:4px;
   }
   .board-scroll svg{
-    width:100%;height:auto;display:block;
-    aspect-ratio:880 / 330;
+    display:block;
     touch-action:manipulation;
+    /* width/height задаются инлайново из JS (resizeBoardSvg) */
   }
   @media (hover:none),(max-width:760px){ .board-scroll{filter:none} }
 
@@ -120,7 +120,7 @@
   #info b{color:#4dd4ac;font-weight:600;}
 
   .cell{
-    fill:rgba(255,255,255,0);
+    fill:rgba(255,255,255,0.001);
     pointer-events:all;
     cursor:pointer;
     transition:fill .16s ease;
@@ -213,7 +213,7 @@
     .note-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
     .note-btn{width:auto;height:46px;font-size:13px}
     button,.scale-preset,.scale-pos-btn{min-height:44px}
-    .board-scroll svg{min-width:calc(var(--vb-w,880) * 1px)}
+    /*.board-scroll svg{min-width:calc(var(--vb-w,880) * 1px)}*/
   }
   @media (max-width:380px){
     .string-tuners{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -728,16 +728,38 @@
     viewBox = { x: v.x, y: 0, w: v.w, h: BOARD_H };
 
     svg.setAttribute('viewBox', `${v.x} 0 ${v.w} ${BOARD_H}`);
-    svg.setAttribute('width', v.w);
-    svg.setAttribute('height', BOARD_H);
-    svg.style.aspectRatio = v.w + ' / ' + BOARD_H;
-    boardScroll.style.setProperty('--vb-w', v.w);
-    boardScroll.style.setProperty('--vb-h', BOARD_H);
+
+    resizeBoardSvg();
 
     document.querySelectorAll('#fretViewSeg button').forEach(b => {
       b.classList.toggle('active', b.dataset.view === key);
     });
     updateScrollHint();
+  }
+
+  function resizeBoardSvg() {
+    if (!svg || !boardScroll || !viewBox) return;
+
+    const isMobile = window.matchMedia('(max-width:760px)').matches;
+
+    // доступная ширина контейнера (у #board max-width:1080)
+    const containerW = boardScroll.clientWidth || 1080;
+
+    // На мобиле не сжимаем ниже натуральной ширины viewBox → появляется
+    // горизонтальный скролл. На десктопе растягиваем по ширине контейнера.
+    const targetW = isMobile
+      ? Math.max(containerW, viewBox.w)
+      : containerW;
+
+    const targetH = Math.round(targetW * BOARD_H / viewBox.w);
+
+    // Явно задаём размеры — это обходит баг iOS с height:auto + aspect-ratio
+    svg.setAttribute('width',  targetW);
+    svg.setAttribute('height', targetH);
+    svg.style.width     = targetW + 'px';
+    svg.style.height    = targetH + 'px';
+    svg.style.aspectRatio = '';
+    svg.style.minWidth   = '';
   }
 
   function boardGeom() {
@@ -802,7 +824,7 @@
       const cell = cells[s * (MAX_FRET + 1) + f];
       if (!cell) return;
 
-      playNote(cell.midi);
+      playNoteSafe(cell.midi);          // ← ключевая правка
       cell.rect.classList.add('flash');
       setTimeout(() => cell.rect.classList.remove('flash'), 200);
       showInfo(cell);
@@ -1257,6 +1279,93 @@
     return audioCtx;
   }
 
+  // Дожидается состояния running перед запуском нот (важно на iOS)
+  async function playNoteSafe(midi, delay = 0) {
+    const ctx = getAudio();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') {
+      try { await ctx.resume(); } catch (e) {}
+    }
+    if (ctx.state === 'running') {
+      playNote(midi, delay);
+    }
+  }
+
+  function playNote(midi, delay = 0) {
+    const ctx = getAudio();
+    if (!ctx) return;
+
+    const now  = ctx.currentTime + Math.max(0, delay);
+    const freq = 440 * Math.pow(2, (midi - 69) / 12);
+
+    const osc = ctx.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.value = freq;
+
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.Q.value = 1.2;
+    filter.frequency.setValueAtTime(Math.min(freq * 14, 12000), now);
+    filter.frequency.exponentialRampToValueAtTime(Math.max(freq * 2.5, 250), now + 0.7);
+
+    const env = ctx.createGain();
+    env.gain.setValueAtTime(0.0001, now);
+    env.gain.exponentialRampToValueAtTime(0.22, now + 0.008);
+    env.gain.exponentialRampToValueAtTime(0.0001, now + 1.4);
+
+    osc.connect(filter).connect(env).connect(masterGain || ctx.destination);
+    osc.start(now);
+    osc.stop(now + 1.5);
+  }
+
+  async function playChord() {
+    if (state.chordNotes.size === 0) return;
+    const ctx = getAudio();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') {
+      try { await ctx.resume(); } catch (e) {}
+    }
+    if (ctx.state !== 'running') return;
+
+    const v = currentVoicing();
+    if (v) {
+      let i = 0;
+      for (let s = 0; s < STRING_COUNT; s++) {
+        const f = v.frets[s];
+        if (f < 0) continue;
+        playNote(state.STRINGS_MIDI[s] + f, i * 0.045);
+        i++;
+      }
+      return;
+    }
+    Array.from(state.chordNotes).sort((a, b) => a - b).forEach((pc, i) => {
+      let midi = pc;
+      while (midi < 40) midi += 12;
+      playNote(midi, i * 0.06);
+    });
+  }
+
+  async function playScale() {
+    if (!state.scaleActive || state.scalePcs.size === 0) return;
+
+    const ctx = getAudio();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') {
+      try { await ctx.resume(); } catch (e) {}
+    }
+    if (ctx.state !== 'running') return;
+
+    const rootPc = state.scaleRootPc;
+    let startMidi = 40;
+    while (pcOf(startMidi) !== rootPc && startMidi < 60) startMidi++;
+
+    const notes = [];
+    for (let midi = startMidi; midi <= startMidi + 24; midi++) {
+      if (state.scalePcs.has(pcOf(midi))) notes.push(midi);
+    }
+    notes.forEach((midi, i) => playNote(midi, i * 0.13));
+  }
+
   function unlockAudio() {
     const ctx = getAudio();
     if (!ctx) return;
@@ -1270,7 +1379,8 @@
       try { navigator.audioSession.type = 'playback'; } catch (e) {}
     }
   }
-  ['pointerdown', 'touchstart', 'keydown'].forEach(ev =>
+
+  ['pointerdown', 'touchend', 'click', 'keydown'].forEach(ev =>
     document.addEventListener(ev, unlockAudio, { once: true, passive: true })
   );
 
@@ -1722,6 +1832,10 @@
     updateScaleInfo();
     $('info').textContent = t().infoHint;
     updateScrollHint();
+    requestAnimationFrame(() => {
+      resizeBoardSvg();
+      updateScrollHint();
+    });
   }
 
   function init() {
@@ -1775,12 +1889,20 @@
       else if (boardScroll) boardScroll.scrollLeft = 0;
     });
 
-    let rz;
+    let rzTimer;
     window.addEventListener('resize', () => {
-      clearTimeout(rz);
-      rz = setTimeout(updateScrollHint, 150);
+      clearTimeout(rzTimer);
+      rzTimer = setTimeout(() => {
+        resizeBoardSvg();
+        updateScrollHint();
+      }, 150);
     });
-    window.addEventListener('orientationchange', () => setTimeout(updateScrollHint, 300));
+    window.addEventListener('orientationchange', () => {
+      setTimeout(() => {
+        resizeBoardSvg();
+        updateScrollHint();
+      }, 300);
+    });
 
     const baseFretEl = $('baseFret');
     baseFretEl.addEventListener('input', (e) => {
